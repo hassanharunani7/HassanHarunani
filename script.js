@@ -1,44 +1,23 @@
-// ===== NAVIGATION FUNCTIONALITY =====
+// Mobile Menu Toggle
 const hamburger = document.querySelector('.hamburger');
-const navMenu = document.querySelector('.nav-menu');
-const navLinks = document.querySelectorAll('.nav-link');
+const navLinks = document.querySelector('.nav-links');
 
-// Toggle mobile menu
-hamburger.addEventListener('click', () => {
-    navMenu.classList.toggle('active');
-    hamburger.classList.toggle('active');
-});
-
-// Close menu when link is clicked
-navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-        navMenu.classList.remove('active');
-        hamburger.classList.remove('active');
-    });
-});
-
-// ===== ACTIVE NAV LINK =====
-window.addEventListener('scroll', () => {
-    let current = '';
-    
-    const sections = document.querySelectorAll('section');
-    sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.clientHeight;
-        if (pageYOffset >= sectionTop - 200) {
-            current = section.getAttribute('id');
-        }
+if (hamburger) {
+    hamburger.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+        hamburger.classList.toggle('active');
     });
 
-    navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href').slice(1) === current) {
-            link.classList.add('active');
-        }
+    // Close menu when link is clicked
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('active');
+            hamburger.classList.remove('active');
+        });
     });
-});
+}
 
-// ===== SMOOTH SCROLL =====
+// Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -52,146 +31,162 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// ===== SCROLL ANIMATIONS =====
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -100px 0px'
-};
+// Active Navigation Link on Scroll
+window.addEventListener('scroll', () => {
+    let current = '';
+    const sections = document.querySelectorAll('section');
 
-const observer = new IntersectionObserver(function(entries) {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0)';
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (scrollY >= sectionTop - 200) {
+            current = section.getAttribute('id');
         }
     });
-}, observerOptions);
 
-// Observe all cards and elements
-document.querySelectorAll('.achievement-card, .leadership-card, .subject-card, .info-card, .stat').forEach(el => {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(30px)';
-    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    observer.observe(el);
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
 });
 
-// ===== CONTACT FORM HANDLING =====
+// Contact Form Handling
 const contactForm = document.getElementById('contactForm');
 
 if (contactForm) {
     contactForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        
-        // Get form data
-        const formData = new FormData(this);
-        const name = this.querySelector('input[type="text"]').value;
-        const email = this.querySelector('input[type="email"]').value;
-        const message = this.querySelector('textarea').value;
-        
+
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const subject = document.getElementById('subject').value;
+        const message = document.getElementById('message').value;
+
+        // Basic validation
+        if (!name || !email || !subject || !message) {
+            showNotification('Please fill out all fields', 'error');
+            return;
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showNotification('Please enter a valid email address', 'error');
+            return;
+        }
+
         // Show success message
-        showNotification('Message sent successfully! I will get back to you soon.', 'success');
-        
+        showNotification('Thank you! Your message has been sent successfully. I will get back to you soon!', 'success');
+
         // Reset form
         this.reset();
     });
 }
 
-// ===== NOTIFICATION FUNCTION =====
+// Notification System
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    
-    const style = document.createElement('style');
-    style.textContent = `
-        .notification {
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            padding: 1rem 2rem;
-            border-radius: 10px;
-            font-weight: 600;
-            animation: slideIn 0.5s ease-out;
-            z-index: 2000;
-            max-width: 300px;
-        }
-        
-        .notification-success {
-            background: linear-gradient(135deg, #00c9a7 0%, #00a86b 100%);
-            color: white;
-        }
-        
-        .notification-error {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-            color: white;
-        }
-        
-        .notification-info {
-            background: linear-gradient(135deg, #00a8e8 0%, #004e89 100%);
-            color: white;
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(400px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        @keyframes slideOut {
-            from {
-                opacity: 1;
-                transform: translateX(0);
-            }
-            to {
-                opacity: 0;
-                transform: translateX(400px);
-            }
-        }
+    notification.innerHTML = `
+        <div class="notification-content">
+            <p>${message}</p>
+            <button class="notification-close" onclick="this.parentElement.parentElement.remove();">×</button>
+        </div>
     `;
-    
+
+    // Create styles if not already present
     if (!document.querySelector('style[data-notification]')) {
+        const style = document.createElement('style');
         style.setAttribute('data-notification', 'true');
+        style.textContent = `
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 9999;
+                animation: slideInRight 0.3s ease-out;
+                max-width: 400px;
+            }
+
+            .notification-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .notification-content p {
+                margin: 0;
+                font-weight: 500;
+            }
+
+            .notification-close {
+                background: none;
+                border: none;
+                font-size: 1.5rem;
+                cursor: pointer;
+                opacity: 0.7;
+                transition: opacity 0.3s;
+            }
+
+            .notification-close:hover {
+                opacity: 1;
+            }
+
+            .notification-success {
+                background: #10b981;
+                color: white;
+            }
+
+            .notification-error {
+                background: #ef4444;
+                color: white;
+            }
+
+            .notification-info {
+                background: #3b82f6;
+                color: white;
+            }
+
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
         document.head.appendChild(style);
     }
-    
+
     document.body.appendChild(notification);
-    
+
+    // Auto-remove after 5 seconds
     setTimeout(() => {
-        notification.style.animation = 'slideOut 0.5s ease-in';
+        notification.style.animation = 'slideOutRight 0.3s ease-in';
         setTimeout(() => {
             notification.remove();
-        }, 500);
-    }, 3000);
+        }, 300);
+    }, 5000);
 }
 
-// ===== PAGE LOAD ANIMATIONS =====
-window.addEventListener('load', () => {
-    const heroTitle = document.querySelector('.hero-title');
-    const heroSubtitle = document.querySelector('.hero-subtitle');
-    
-    // Add visible class to trigger animations
-    if (heroTitle) {
-        heroTitle.style.animation = 'slideInLeft 0.8s ease-out';
-    }
-    if (heroSubtitle) {
-        heroSubtitle.style.animation = 'slideInLeft 0.9s ease-out';
-    }
-});
-
-// ===== KEYBOARD NAVIGATION =====
-document.addEventListener('keydown', (e) => {
-    // Close mobile menu on Escape
-    if (e.key === 'Escape') {
-        navMenu.classList.remove('active');
-        hamburger.classList.remove('active');
-    }
-});
-
-// ===== INITIALIZATION =====
-console.log('Hassan Harunani\'s Portfolio - Loaded Successfully! 🚀');
-console.log('Welcome to my digital space dedicated to excellence in academics, athletics, leadership, and forensic science.');
+console.log('Portfolio loaded successfully! 🎉');
